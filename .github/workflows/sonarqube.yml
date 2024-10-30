@@ -40,8 +40,8 @@ jobs:
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
 
-      # 6. Ejecutar el análisis de SonarQube y excluir archivos JS/TS
-      - name: Run SonarQube Scan with JS/TS Exclusion
+      # 6. Ejecutar el análisis de SonarQube y excluir archivos JS, TS, y CSS
+      - name: Run SonarQube Scan with JS, TS, and CSS Exclusions
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -50,7 +50,7 @@ jobs:
             -Dsonar.organization=my-org \
             -Dsonar.projectKey=my-laravel-app \
             -Dsonar.sources=. \
-            -Dsonar.exclusions=**/*.js,**/*.ts \
+            -Dsonar.exclusions=**/*.js,**/*.ts,**/*.css \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
