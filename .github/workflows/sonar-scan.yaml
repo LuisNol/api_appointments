@@ -25,6 +25,9 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
+      - name: Add Java to PATH
+        run: echo "JAVA_HOME is set to $JAVA_HOME" && export PATH="$JAVA_HOME/bin:$PATH"
+
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
