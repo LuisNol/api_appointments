@@ -1,0 +1,34 @@
+name: CI/CD workflow for Laravel Build and Sonar Code Scan
+
+on:
+  push:
+    branches:
+      - main  # El nombre de tu rama principal
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'  # Cambia a la versión de PHP que utilizas
+
+      - name: Install Composer dependencies
+        run: composer install --no-scripts --no-interaction
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonar-scanner-action@v1
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.organization=my-org
+            -Dsonar.projectKey=my-laravel-app
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
