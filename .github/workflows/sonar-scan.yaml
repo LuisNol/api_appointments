@@ -28,18 +28,18 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      # 4. Instalar Node.js (requerido para análisis de JS/TS en SonarQube)
+      # 4. Instalar Node.js y especificar su ruta
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '16'  # Usa una versión compatible, 16 o superior
 
-      # 5. Asegurar permisos de ejecución para Node.js
-      - name: Ensure Node.js permissions
+      # 5. Verificar instalación de Node.js y capturar la ruta de Node.js
+      - name: Capture Node.js path
+        id: node_path
         run: |
-          sudo chmod +x $(which node)
-          sudo chmod +x $(which npm)
-          node -v  # Esto confirma que Node.js está disponible
+          echo "NODE_PATH=$(which node)" >> $GITHUB_ENV
+          node -v  # Confirma que Node.js está disponible
 
       # 6. Instalar dependencias de Composer para Laravel
       - name: Install Composer dependencies
@@ -53,16 +53,17 @@ jobs:
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
 
-      # 8. Ejecutar el análisis de SonarQube
+      # 8. Ejecutar el análisis de SonarQube, especificando la ruta de Node.js
       - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          NODE_PATH: ${{ env.NODE_PATH }}
         run: |
           ./sonar-scanner/bin/sonar-scanner \
             -Dsonar.organization=my-org \
             -Dsonar.projectKey=my-laravel-app \
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN
-
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.nodejs.executable=$NODE_PATH
