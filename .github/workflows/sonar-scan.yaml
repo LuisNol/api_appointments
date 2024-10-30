@@ -32,7 +32,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'  # Usa una versión compatible con tu entorno, puede ser 16 o superior
+          node-version: '16'  # Usa una versión compatible, 16 o superior
 
       # 5. Instalar dependencias de Composer para Laravel
       - name: Install Composer dependencies
@@ -58,3 +58,4 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
+
