@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI Pipeline with SonarQube
 
 on:
   push:
@@ -20,16 +20,22 @@ jobs:
         with:
           php-version: '8.0'
 
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
+
       - name: Set up Java 17
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Install dependencies
-        run: composer install --no-progress --no-suggest --prefer-dist
+      - name: Generate environment file
+        run: cp .env.example .env
 
-      - name: Run Tests and Generate Coverage
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run Tests and Generate Coverage Report
         run: |
           mkdir -p storage
           php artisan test --coverage-clover=storage/coverage.xml
@@ -42,3 +48,4 @@ jobs:
             -Dsonar.projectKey=my-laravel-app
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.php.coverage.reportPaths=storage/coverage.xml
