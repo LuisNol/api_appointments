@@ -23,7 +23,8 @@ jobs:
         run: composer install --no-scripts --no-interaction
 
       - name: SonarQube Scan
-        uses: sonarsource/sonar-scanner-action@v1
+        uses: SonarSource/sonarcloud-github-action@v1.5
+
         with:
           projectBaseDir: .
           args: >
