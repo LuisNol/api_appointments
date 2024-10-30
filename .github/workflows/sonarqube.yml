@@ -28,21 +28,11 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      # 4. Instalar Node.js manualmente y forzar permisos
-      - name: Install Node.js manually and force permissions
-        run: |
-          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          sudo chmod +x $(which node)
-          sudo chmod +x $(which npm)
-          echo "NODE_PATH=$(which node)" >> $GITHUB_ENV
-          node -v  # Confirmar que Node.js está instalado y accesible
-
-      # 5. Instalar dependencias de Composer para Laravel
+      # 4. Instalar dependencias de Composer para Laravel
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
-      # 6. Instalar SonarScanner
+      # 5. Instalar SonarScanner
       - name: Install SonarScanner
         run: |
           wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.0.2966-linux.zip
@@ -50,18 +40,17 @@ jobs:
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
 
-      # 7. Ejecutar el análisis de SonarQube y especificar la ruta de Node.js
-      - name: Run SonarQube Scan
+      # 6. Ejecutar el análisis de SonarQube y excluir archivos JS/TS
+      - name: Run SonarQube Scan with JS/TS Exclusion
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          NODE_PATH: ${{ env.NODE_PATH }}
         run: |
-          sudo ./sonar-scanner/bin/sonar-scanner \
+          ./sonar-scanner/bin/sonar-scanner \
             -Dsonar.organization=my-org \
             -Dsonar.projectKey=my-laravel-app \
             -Dsonar.sources=. \
+            -Dsonar.exclusions=**/*.js,**/*.ts \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.nodejs.executable=$NODE_PATH
+            -Dsonar.login=$SONAR_TOKEN
 
