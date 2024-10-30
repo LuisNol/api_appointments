@@ -19,12 +19,17 @@ jobs:
         with:
           php-version: '8.1'  # Cambia a la versión de PHP que utilizas
 
+      - name: Set up Java 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
       - name: SonarQube Scan
         uses: SonarSource/sonarcloud-github-action@v1.5
-
         with:
           projectBaseDir: .
           args: >
@@ -33,3 +38,4 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
