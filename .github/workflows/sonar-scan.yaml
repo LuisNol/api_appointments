@@ -28,24 +28,23 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      # 4. Instalar dependencias de Composer para Laravel
+      # 4. Instalar Node.js (requerido para análisis de JS/TS en SonarQube)
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'  # Usa una versión compatible con tu entorno, puede ser 16 o superior
+
+      # 5. Instalar dependencias de Composer para Laravel
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
-      # 5. Instalar SonarScanner
+      # 6. Instalar SonarScanner
       - name: Install SonarScanner
         run: |
           wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.0.2966-linux.zip
           unzip sonar-scanner-cli-5.0.0.2966-linux.zip
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
-        # Manejo de errores al instalar SonarScanner
-        shell: bash
-        continue-on-error: false
-
-      # 6. Verificar que SonarScanner está instalado y en el PATH
-      - name: Verify SonarScanner installation
-        run: ./sonar-scanner/bin/sonar-scanner -v
 
       # 7. Ejecutar el análisis de SonarQube
       - name: Run SonarQube Scan
@@ -59,6 +58,3 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
-        # Manejo de errores comunes en la ejecución de SonarScanner
-        shell: bash
-        continue-on-error: false
