@@ -25,20 +25,25 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Add Java to PATH
-        run: echo "JAVA_HOME is set to $JAVA_HOME" && export PATH="$JAVA_HOME/bin:$PATH"
-
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarcloud-github-action@v1.5
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.organization=my-org
-            -Dsonar.projectKey=my-laravel-app
+      - name: Install SonarScanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+          unzip sonar-scanner-cli-4.6.2.2472-linux.zip
+          mv sonar-scanner-4.6.2.2472-linux sonar-scanner
+          export PATH="${PATH}:${PWD}/sonar-scanner/bin"
+
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          sonar-scanner \
+            -Dsonar.organization=my-org \
+            -Dsonar.projectKey=my-laravel-app \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN
 
