@@ -34,11 +34,17 @@ jobs:
         with:
           node-version: '16'  # Usa una versión compatible, 16 o superior
 
-      # 5. Instalar dependencias de Composer para Laravel
+      # 5. Verificar instalación de Node.js y permisos
+      - name: Verify Node.js installation and permissions
+        run: |
+          sudo chmod +x $(which node)
+          node -v  # Esto debería mostrar la versión de Node.js si está funcionando correctamente
+
+      # 6. Instalar dependencias de Composer para Laravel
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
-      # 6. Instalar SonarScanner
+      # 7. Instalar SonarScanner
       - name: Install SonarScanner
         run: |
           wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.0.2966-linux.zip
@@ -46,7 +52,7 @@ jobs:
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
 
-      # 7. Ejecutar el análisis de SonarQube
+      # 8. Ejecutar el análisis de SonarQube
       - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
