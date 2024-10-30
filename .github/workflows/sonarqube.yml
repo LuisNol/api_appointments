@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main  # Cambia al nombre de tu rama principal si es diferente
+  pull_request:
+    branches:
+      - main  # Verifica también en las solicitudes de cambio
   workflow_dispatch:
 
 jobs:
@@ -54,3 +57,16 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
+      # 7. Verificar el estado de la Quality Gate
+      - name: Quality Gate Status
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          status=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app | jq -r '.projectStatus.status')
+          if [ "$status" != "OK" ]; then
+            echo "Quality Gate failed: $status"
+            exit 1
+          else
+            echo "Quality Gate passed: $status"
+          fi
