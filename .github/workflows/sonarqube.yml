@@ -1,51 +1,63 @@
-name: CI Pipeline with SonarQube
+name: CI/CD workflow for Laravel Build and Sonar Code Scan
 
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - main  # Cambia al nombre de tu rama principal si es diferente
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. Descargar el código fuente
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # 2. Configurar PHP
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: '8.1'  # Cambia a la versión de PHP que necesitas
 
-      - name: Install Composer dependencies
-        run: composer install --no-progress --no-interaction --prefer-dist
-
+      # 3. Configurar Java 17 (requerido por SonarQube)
       - name: Set up Java 17
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Generate environment file
-        run: cp .env.example .env
-
-      - name: Generate application key
-        run: php artisan key:generate
-
-      - name: Run Tests and Generate Coverage Report
+      # 4. Instalar Node.js manualmente
+      - name: Install Node.js manually
         run: |
-          mkdir -p storage
-          php artisan test --coverage-clover=storage/coverage.xml
+          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          sudo chmod +x $(which node)
+          sudo chmod +x $(which npm)
+          node -v  # Confirmar que Node.js está instalado y accesible
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarcloud-github-action@v1.5
-        with:
-          args: >
-            -Dsonar.organization=my-org
-            -Dsonar.projectKey=my-laravel-app
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.php.coverage.reportPaths=storage/coverage.xml
+      # 5. Instalar dependencias de Composer para Laravel
+      - name: Install Composer dependencies
+        run: composer install --no-scripts --no-interaction
+
+      # 6. Instalar SonarScanner
+      - name: Install SonarScanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.0.2966-linux.zip
+          unzip sonar-scanner-cli-5.0.0.2966-linux.zip
+          mv sonar-scanner-5.0.0.2966-linux sonar-scanner
+          echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
+
+      # 7. Ejecutar el análisis de SonarQube
+      - name: Run SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./sonar-scanner/bin/sonar-scanner \
+            -Dsonar.organization=my-org \
+            -Dsonar.projectKey=my-laravel-app \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN
