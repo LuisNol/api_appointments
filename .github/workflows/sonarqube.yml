@@ -35,7 +35,11 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
-      # 5. Instalar SonarScanner
+      # 5. Instalar JQ (herramienta para procesar JSON en Bash)
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      # 6. Instalar SonarScanner
       - name: Install SonarScanner
         run: |
           wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.0.2966-linux.zip
@@ -43,7 +47,7 @@ jobs:
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
 
-      # 6. Ejecutar el análisis de SonarQube y excluir archivos JS, TS, y CSS
+      # 7. Ejecutar el análisis de SonarQube y excluir archivos JS, TS, y CSS
       - name: Run SonarQube Scan with JS, TS, and CSS Exclusions
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -57,16 +61,28 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
-      # 7. Verificar el estado de la Quality Gate
+      # 8. Verificar el estado de la Quality Gate
       - name: Quality Gate Status
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          status=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app | jq -r '.projectStatus.status')
-          if [ "$status" != "OK" ]; then
-            echo "Quality Gate failed: $status"
-            exit 1
-          else
-            echo "Quality Gate passed: $status"
-          fi
+          # Intentar hasta que el análisis termine en SonarQube
+          for i in {1..10}; do
+            response=$(curl -s -u $SONAR_TOKEN $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
+            status=$(echo $response | jq -r '.projectStatus.status')
+
+            if [ "$status" == "OK" ]; then
+              echo "Quality Gate passed: $status"
+              exit 0
+            elif [ "$status" == "ERROR" ]; then
+              echo "Quality Gate failed: $status"
+              exit 1
+            else
+              echo "Waiting for SonarQube analysis to complete..."
+              sleep 10
+            fi
+          done
+
+          echo "Quality Gate check timed out"
+          exit 1
