@@ -68,18 +68,18 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          for i in {1..10}; do
+          for i in {1..15}; do
             response=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
             echo "Response from SonarQube API: $response"
             status=$(echo $response | jq -r '.projectStatus.status')
 
             if [ "$status" == "OK" ]; then
               echo "Quality Gate passed"
-              echo "::set-output name=status::passed"
+              echo "status=passed" >> $GITHUB_ENV
               break
             elif [ "$status" == "ERROR" ]; then
               echo "Quality Gate failed"
-              echo "::set-output name=status::failed"
+              echo "status=failed" >> $GITHUB_ENV
               break
             else
               echo "Waiting for SonarQube analysis to complete..."
@@ -89,7 +89,7 @@ jobs:
 
       # 9. Realizar despliegue en DigitalOcean si pasa la Quality Gate
       - name: Deploy to DigitalOcean
-        if: steps.sonar_quality_gate.outputs.status == 'passed'
+        if: env.status == 'passed'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
           REMOTE_USER: 'root'
@@ -98,7 +98,8 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
           ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git pull origin main && php artisan migrate --force"
-        # Mensaje de confirmación del despliegue
+
+      # 10. Mensaje de confirmación del despliegue
       - name: Confirm Deployment
-        if: steps.sonar_quality_gate.outputs.status == 'passed'
+        if: env.status == 'passed'
         run: echo "Deployment to DigitalOcean completed successfully."
