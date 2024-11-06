@@ -1,12 +1,12 @@
-name: CI/CD workflow for Laravel Build and Sonar Code Scan
+name: CI/CD workflow for Laravel Build, Sonar Code Scan, and Deployment
 
 on:
   push:
     branches:
-      - main  # Cambia al nombre de tu rama principal si es diferente
+      - main
   pull_request:
     branches:
-      - main  # Verifica también en las solicitudes de cambio
+      - main
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'  # Cambia a la versión de PHP que necesitas
+          php-version: '8.1'
 
       # 3. Configurar Java 17 (requerido por SonarQube)
       - name: Set up Java 17
@@ -61,30 +61,44 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
-      # 8. Verificar el estado de la Quality Gate sin detener el flujo en caso de fallo
+      # 8. Verificar el estado de la Quality Gate
       - name: Quality Gate Status
+        id: sonar_quality_gate
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          # Intentar hasta que el análisis termine en SonarQube
           for i in {1..10}; do
             response=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
-            echo "Response from SonarQube API: $response"  # Para depuración
+            echo "Response from SonarQube API: $response"
             status=$(echo $response | jq -r '.projectStatus.status')
 
             if [ "$status" == "OK" ]; then
-              echo "Quality Gate passed: $status"
+              echo "Quality Gate passed"
+              echo "::set-output name=status::passed"
               break
             elif [ "$status" == "ERROR" ]; then
-              echo "Quality Gate failed: $status"
+              echo "Quality Gate failed"
+              echo "::set-output name=status::failed"
               break
             else
               echo "Waiting for SonarQube analysis to complete..."
               sleep 10
             fi
           done
-          
-          if [ "$status" != "OK" ]; then
-            echo "Warning: Quality Gate failed or timed out. Proceeding without stopping the workflow."
-          fi
+
+      # 9. Realizar despliegue en DigitalOcean si pasa la Quality Gate
+      - name: Deploy to DigitalOcean
+        if: steps.sonar_quality_gate.outputs.status == 'passed'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
+          REMOTE_USER: 'root'
+          REMOTE_HOST: '24.199.121.150'
+          REMOTE_PATH: '/var/www/api_appointments'
+        run: |
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+          ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git pull origin main && php artisan migrate --force"
+        # Mensaje de confirmación del despliegue
+      - name: Confirm Deployment
+        if: steps.sonar_quality_gate.outputs.status == 'passed'
+        run: echo "Deployment to DigitalOcean completed successfully."
