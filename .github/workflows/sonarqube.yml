@@ -96,10 +96,13 @@ jobs:
           REMOTE_HOST: '24.199.121.150'
           REMOTE_PATH: '/var/www/api_appointments'
         run: |
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-          ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git pull origin main && php artisan migrate --force"
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git pull origin main && php artisan migrate --force"
 
       # 10. Mensaje de confirmación del despliegue
       - name: Confirm Deployment
         if: env.status == 'passed'
         run: echo "Deployment to DigitalOcean completed successfully."
+
