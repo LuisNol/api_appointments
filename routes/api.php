@@ -29,7 +29,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group([
- 
+     //Prueba 5/11/2024  hora:11:38
     // 'middleware' => 'auth:api',
     'prefix' => 'auth',
     // 'middleware' => ['role:admin','permission:publish articles'],
