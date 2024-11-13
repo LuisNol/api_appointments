@@ -99,28 +99,19 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git reset --hard HEAD && git pull origin main && php artisan migrate --force"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "
+            cd $REMOTE_PATH && \
+            git reset --hard HEAD && \
+            git pull origin main && \
+            php artisan migrate --force
+          "
 
       # 10. Mensaje de confirmación del despliegue
       - name: Confirm Deployment
         if: env.status == 'passed'
         run: echo "Deployment to DigitalOcean completed successfully."
 
-      # 11. Enviar notificación por correo si el despliegue fue exitoso
-      - name: Send Success Email
-        if: env.status == 'passed'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Despliegue Exitoso"
-          body: "El despliegue a DigitalOcean se completó correctamente."
-          to: "nolberto.sumaran@gmail.com"
-          from: "nolberto.sumaran@gmail.com"
-
-      # 12. Enviar notificación por correo si la Quality Gate falló
+      # 11. Enviar notificación por correo si la Quality Gate falló
       - name: Send Quality Gate Failure Email
         if: env.status == 'failed'
         uses: dawidd6/action-send-mail@v3
@@ -131,5 +122,19 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "Despliegue Fallido - Quality Gate no aprobada"
           body: "El despliegue no se realizó porque la Quality Gate de SonarQube no fue aprobada. Revise el análisis en SonarQube para más detalles."
+          to: "nolberto.sumaran@gmail.com"
+          from: "nolberto.sumaran@gmail.com"
+
+      # 12. Enviar notificación por correo si el despliegue fue exitoso
+      - name: Send Success Email
+        if: env.status == 'passed'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Despliegue Exitoso"
+          body: "El despliegue a DigitalOcean se completó correctamente."
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
