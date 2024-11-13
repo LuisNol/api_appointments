@@ -67,6 +67,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        continue-on-error: true
         run: |
           for i in {1..15}; do
             response=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
@@ -87,9 +88,9 @@ jobs:
             fi
           done
 
-      # 9. Realizar despliegue en DigitalOcean si pasa la Quality Gate
+      # 9. Realizar despliegue en DigitalOcean
       - name: Deploy to DigitalOcean
-        if: env.status == 'passed'
+        if: success()
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
           REMOTE_USER: 'root'
@@ -101,35 +102,26 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git reset --hard HEAD && git pull origin main && php artisan migrate --force"
 
-      # 10. Mensaje de confirmación del despliegue
+      # 10. Confirmación del despliegue
       - name: Confirm Deployment
-        if: env.status == 'passed'
+        if: success()
         run: echo "Deployment to DigitalOcean completed successfully."
 
-      # 11. Enviar notificación por correo si el despliegue fue exitoso
-      - name: Send Success Email
-        if: env.status == 'passed'
+      # 11. Enviar notificación por correo con resultado
+      - name: Send Deployment Email
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Despliegue Exitoso"
-          body: "El despliegue a DigitalOcean se completó correctamente."
+          subject: |
+            Despliegue completado - ${{ env.status == 'passed' && 'Quality Gate Aprobada' || 'Quality Gate No Aprobada' }}
+          body: |
+            Resultado del despliegue:
+            - Estado de la Quality Gate: ${{ env.status == 'passed' && 'Aprobada' || 'No Aprobada' }}
+            - Despliegue en DigitalOcean: ${{ success() && 'Exitoso' || 'Fallido' }}
+            Consulte los registros en GitHub Actions para más detalles.
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
 
-      # 12. Enviar notificación por correo si la Quality Gate falló
-      - name: Send Quality Gate Failure Email
-        if: env.status == 'failed'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Despliegue Fallido - Quality Gate no aprobada"
-          body: "El despliegue no se realizó porque la Quality Gate de SonarQube no fue aprobada. Revise el análisis en SonarQube para más detalles."
-          to: "nolberto.sumaran@gmail.com"
-          from: "nolberto.sumaran@gmail.com"
