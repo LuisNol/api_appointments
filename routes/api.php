@@ -27,7 +27,7 @@ use App\Http\Controllers\Appointment\AppointmentAttentioncontroller;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-
+//prueba error IC
 Route::group([
      //Prueba 5/11/2024  hora:11:38
     // 'middleware' => 'auth:api',
