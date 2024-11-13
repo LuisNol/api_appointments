@@ -31,15 +31,25 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      # 4. Instalar dependencias de Composer para Laravel
+      # 4. Configurar Node.js (requerido para análisis de SonarQube en archivos JavaScript/TypeScript)
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # Asegúrate de usar una versión compatible
+
+      # 5. Otorgar permisos de ejecución a Node.js (opcional si ocurre el error de permisos)
+      - name: Grant permissions to Node
+        run: chmod +x $(which node)
+
+      # 6. Instalar dependencias de Composer para Laravel
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction
 
-      # 5. Instalar JQ (herramienta para procesar JSON en Bash)
+      # 7. Instalar JQ (herramienta para procesar JSON en Bash)
       - name: Install jq
         run: sudo apt-get install -y jq
 
-      # 6. Instalar SonarScanner
+      # 8. Instalar SonarScanner
       - name: Install SonarScanner
         run: |
           wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.0.2966-linux.zip
@@ -47,13 +57,13 @@ jobs:
           mv sonar-scanner-5.0.0.2966-linux sonar-scanner
           echo "$(pwd)/sonar-scanner/bin" >> $GITHUB_PATH
 
-      # 7. Ejecutar el análisis de SonarQube y excluir archivos JS, TS, y CSS
+      # 9. Ejecutar el análisis de SonarQube y excluir archivos JS, TS, y CSS
       - name: Run SonarQube Scan with JS, TS, and CSS Exclusions
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          ./sonar-scanner/bin/sonar-scanner \
+          ./sonar-scanner/bin/sonar-scanner -X \
             -Dsonar.organization=my-org \
             -Dsonar.projectKey=my-laravel-app \
             -Dsonar.sources=. \
@@ -61,7 +71,7 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
-      # 8. Verificar el estado de la Quality Gate
+      # 10. Verificar el estado de la Quality Gate
       - name: Quality Gate Status
         id: sonar_quality_gate
         env:
@@ -87,7 +97,7 @@ jobs:
             fi
           done
 
-      # 9. Realizar despliegue en DigitalOcean si pasa la Quality Gate
+      # 11. Realizar despliegue en DigitalOcean si pasa la Quality Gate
       - name: Deploy to DigitalOcean
         if: env.status == 'passed'
         env:
@@ -101,12 +111,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git reset --hard HEAD && git pull origin main && php artisan migrate --force"
 
-      # 10. Mensaje de confirmación del despliegue
+      # 12. Mensaje de confirmación del despliegue
       - name: Confirm Deployment
         if: env.status == 'passed'
         run: echo "Deployment to DigitalOcean completed successfully."
 
-      # 11. Enviar notificación por correo si el despliegue fue exitoso
+      # 13. Enviar notificación por correo si el despliegue fue exitoso
       - name: Send Success Email
         if: env.status == 'passed'
         uses: dawidd6/action-send-mail@v3
@@ -120,7 +130,7 @@ jobs:
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
 
-      # 12. Enviar notificación por correo si la Quality Gate falló
+      # 14. Enviar notificación por correo si la Quality Gate falló
       - name: Send Quality Gate Failure Email
         if: env.status == 'failed'
         uses: dawidd6/action-send-mail@v3
