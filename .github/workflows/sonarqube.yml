@@ -90,7 +90,7 @@ jobs:
 
       # 9. Realizar despliegue en DigitalOcean
       - name: Deploy to DigitalOcean
-        if: success()
+        if: always()  # Se ejecutará independientemente del resultado de pasos anteriores
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DIGITALOCEAN_SSH_KEY }}
           REMOTE_USER: 'root'
@@ -104,7 +104,6 @@ jobs:
 
       # 10. Confirmación del despliegue
       - name: Confirm Deployment
-        if: success()
         run: echo "Deployment to DigitalOcean completed successfully."
 
       # 11. Enviar notificación por correo con resultado
@@ -120,9 +119,8 @@ jobs:
           body: |
             Resultado del despliegue:
             - Estado de la Quality Gate: ${{ env.status == 'passed' && 'Aprobada' || 'No Aprobada' }}
-            - Despliegue en DigitalOcean: ${{ success() && 'Exitoso' || 'Fallido' }}
+            - Despliegue en DigitalOcean: ${{ job.status == 'success' && 'Exitoso' || 'Fallido' }}
             Consulte los registros en GitHub Actions para más detalles.
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
-
 
