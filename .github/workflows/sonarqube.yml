@@ -67,7 +67,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        continue-on-error: true
         run: |
           for i in {1..15}; do
             response=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
@@ -88,7 +87,7 @@ jobs:
             fi
           done
 
-      # 9. Realizar despliegue en DigitalOcean si la Quality Gate fue aprobada
+      # 9. Realizar despliegue en DigitalOcean si pasa la Quality Gate
       - name: Deploy to DigitalOcean
         if: env.status == 'passed'
         env:
@@ -100,10 +99,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_PATH && git reset --hard HEAD && git pull origin main && php artisan migrate --force"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST "
+            cd $REMOTE_PATH && \
+            git reset --hard HEAD && \
+            git pull origin main && \
+            php artisan migrate --force
+          "
 
       # 10. Mensaje de confirmación del despliegue
       - name: Confirm Deployment
@@ -137,3 +138,4 @@ jobs:
           body: "El despliegue a DigitalOcean se completó correctamente."
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
+
