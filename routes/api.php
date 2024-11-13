@@ -29,7 +29,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 //prueba error IC
 //prueba 2
-//hola.
+//hola
 
 
 Route::group([
