@@ -67,7 +67,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        continue-on-error: true  # Permitir que el flujo continúe incluso si falla
         run: |
           for i in {1..15}; do
             response=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
@@ -88,7 +87,7 @@ jobs:
             fi
           done
 
-      # 9. Realizar despliegue en DigitalOcean si la Quality Gate fue aprobada
+      # 9. Realizar despliegue en DigitalOcean si pasa la Quality Gate
       - name: Deploy to DigitalOcean
         if: env.status == 'passed'
         env:
@@ -107,21 +106,7 @@ jobs:
         if: env.status == 'passed'
         run: echo "Deployment to DigitalOcean completed successfully."
 
-      # 11. Enviar notificación por correo si la Quality Gate falló
-      - name: Send Quality Gate Failure Email
-        if: env.status == 'failed'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Despliegue Fallido - Quality Gate no aprobada"
-          body: "El despliegue no se realizó porque la Quality Gate de SonarQube no fue aprobada. Revise el análisis en SonarQube para más detalles."
-          to: "nolberto.sumaran@gmail.com"
-          from: "nolberto.sumaran@gmail.com"
-
-      # 12. Enviar notificación por correo si el despliegue fue exitoso
+      # 11. Enviar notificación por correo si el despliegue fue exitoso
       - name: Send Success Email
         if: env.status == 'passed'
         uses: dawidd6/action-send-mail@v3
@@ -135,3 +120,16 @@ jobs:
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
 
+      # 12. Enviar notificación por correo si la Quality Gate falló
+      - name: Send Quality Gate Failure Email
+        if: env.status == 'failed'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Despliegue Fallido - Quality Gate no aprobada"
+          body: "El despliegue no se realizó porque la Quality Gate de SonarQube no fue aprobada. Revise el análisis en SonarQube para más detalles."
+          to: "nolberto.sumaran@gmail.com"
+          from: "nolberto.sumaran@gmail.com"
