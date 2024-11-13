@@ -132,4 +132,4 @@ jobs:
           subject: "Despliegue Fallido - Quality Gate no aprobada"
           body: "El despliegue no se realizó porque la Quality Gate de SonarQube no fue aprobada. Revise el análisis en SonarQube para más detalles."
           to: "nolberto.sumaran@gmail.com"
-          from: "nolberto.sumaran@gmail.
+          from: "nolberto.sumaran@gmail.com"
