@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 //prueba error IC
+//prueba 2
 Route::group([
      //Prueba 5/11/2024  hora:11:38
     // 'middleware' => 'auth:api',
