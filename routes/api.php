@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //hola
 ///PRUEBA DE FALLO
 ///Prueba de fallo  2
+///Prueba de pase
 
 Route::group([
      //Prueba 5/11/2024  hora:11:38
