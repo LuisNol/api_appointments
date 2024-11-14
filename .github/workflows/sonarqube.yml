@@ -61,13 +61,16 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_TOKEN
 
-      # 8. Verificar el estado de la Quality Gate (aumentando el tiempo de espera)
+      # 8. Verificar el estado de la Quality Gate con una pausa inicial
       - name: Quality Gate Status
         id: sonar_quality_gate
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
+          echo "Esperando 30 segundos iniciales para permitir que SonarQube procese..."
+          sleep 30  # Pausa inicial para dar tiempo a SonarQube
+
           for i in {1..30}; do  # Aumenta el número de intentos a 30
             response=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=my-laravel-app)
             echo "Response from SonarQube API: $response"
@@ -138,3 +141,4 @@ jobs:
           body: "El despliegue a DigitalOcean se completó correctamente."
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
+
