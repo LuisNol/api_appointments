@@ -13,6 +13,8 @@ jobs:
   # BLOQUE 1: CONFIGURACIÓN Y DESCARGA DE DEPENDENCIAS
   setup_dependencies:
     runs-on: ubuntu-latest
+    outputs:
+      sonar_status: ${{ steps.quality_gate_status.outputs.sonar_status }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -45,6 +47,8 @@ jobs:
   sonar_analysis:
     runs-on: ubuntu-latest
     needs: setup_dependencies
+    outputs:
+      sonar_status: ${{ steps.quality_gate_status.outputs.sonar_status }}
     steps:
       - name: Run SonarQube Scan
         env:
@@ -60,7 +64,7 @@ jobs:
             -Dsonar.login=$SONAR_TOKEN
 
       - name: Quality Gate Status
-        id: sonar_quality_gate
+        id: quality_gate_status
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -74,11 +78,11 @@ jobs:
 
             if [ "$status" == "OK" ]; then
               echo "Quality Gate passed"
-              echo "status=passed" >> $GITHUB_ENV
+              echo "::set-output name=sonar_status::passed"
               break
             elif [ "$status" == "ERROR" ]; then
               echo "Quality Gate failed"
-              echo "status=failed" >> $GITHUB_ENV
+              echo "::set-output name=sonar_status::failed"
               break
             else
               echo "Waiting for SonarQube analysis to complete..."
@@ -90,7 +94,7 @@ jobs:
   deploy_application:
     runs-on: ubuntu-latest
     needs: sonar_analysis
-    if: env.status == 'passed'
+    if: needs.sonar_analysis.outputs.sonar_status == 'passed'
     steps:
       - name: Deploy to DigitalOcean
         env:
@@ -115,10 +119,10 @@ jobs:
   # BLOQUE 4: NOTIFICACIONES
   send_notifications:
     runs-on: ubuntu-latest
-    needs: [sonar_analysis, deploy_application]
+    needs: sonar_analysis
     steps:
       - name: Send Quality Gate Failure Email
-        if: env.status == 'failed'
+        if: needs.sonar_analysis.outputs.sonar_status == 'failed'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -131,7 +135,7 @@ jobs:
           from: "nolberto.sumaran@gmail.com"
 
       - name: Send Success Email
-        if: env.status == 'passed'
+        if: needs.sonar_analysis.outputs.sonar_status == 'passed'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -142,3 +146,4 @@ jobs:
           body: "El despliegue a DigitalOcean se completó correctamente."
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
+
