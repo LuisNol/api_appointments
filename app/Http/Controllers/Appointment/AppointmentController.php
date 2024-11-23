@@ -209,67 +209,63 @@ class AppointmentController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $this->authorize('create',Appointment::class);
-        // doctor_id
-        // name
-        // surname
-        // mobile
-        // n_document
-        // name_companion
-        // surname_companion
-        // date_appointment
-        // specialitie_id
-        // doctor_schedule_join_hour_id
-        // amount
-        // amount_add
-        // method_payment
+{
+    $this->authorize('create', Appointment::class);
 
-        $patient = null;
+    $patient = Patient::where("n_document", $request->n_document)->first();
 
-        $patient = Patient::where("n_document",$request->n_document)->first();
+    if (!$patient) {
+        $patient = Patient::create([
+            "name" => $request->name,
+            "surname" => $request->surname,
+            "mobile" => $request->mobile,
+            "n_document" => $request->n_document,
+        ]);
 
-        if(!$patient){
-            $patient = Patient::create([
-                "name" => $request->name,
-                "surname" => $request->surname,
-                "mobile" => $request->mobile,
-                "n_document" => $request->n_document,
+        PatientPerson::create([
+            "patient_id" => $patient->id,
+            "name_companion" => $request->name_companion,
+            "surname_companion" => $request->surname_companion,
+        ]);
+    } else {
+        // Agregamos una validación para evitar errores si la relación person es null
+        if ($patient->person) {
+            $patient->person->update([
+                "name_companion" => $request->name_companion,
+                "surname_companion" => $request->surname_companion,
             ]);
+        } else {
+            // Si no existe la relación, la creamos
             PatientPerson::create([
                 "patient_id" => $patient->id,
                 "name_companion" => $request->name_companion,
                 "surname_companion" => $request->surname_companion,
             ]);
-        }else{
-            $patient->person->update([
-                "name_companion" => $request->name_companion,
-                "surname_companion" => $request->surname_companion,
-            ]);
         }
-
-        $appointment =  Appointment::create([
-            "doctor_id" => $request->doctor_id,
-            "patient_id" => $patient->id,
-            "date_appointment" => Carbon::parse($request->date_appointment)->format("Y-m-d h:i:s"),
-            "specialitie_id" => $request->specialitie_id,
-            "doctor_schedule_join_hour_id" => $request->doctor_schedule_join_hour_id,
-            "user_id" => auth("api")->user()->id,
-            "amount" => $request->amount,
-            "status_pay" => $request->amount != $request->amount_add ? 2 : 1,
-        ]);
-
-
-        AppointmentPay::create([
-            "appointment_id" => $appointment->id,
-            "amount" => $request->amount_add,
-            "method_payment" => $request->method_payment,
-        ]);
-
-        return response()->json([
-            "message" => 200,
-        ]);
     }
+
+    $appointment = Appointment::create([
+        "doctor_id" => $request->doctor_id,
+        "patient_id" => $patient->id,
+        "date_appointment" => Carbon::parse($request->date_appointment)->format("Y-m-d h:i:s"),
+        "specialitie_id" => $request->specialitie_id,
+        "doctor_schedule_join_hour_id" => $request->doctor_schedule_join_hour_id,
+        "user_id" => auth("api")->user()->id,
+        "amount" => $request->amount,
+        "status_pay" => $request->amount != $request->amount_add ? 2 : 1,
+    ]);
+
+    AppointmentPay::create([
+        "appointment_id" => $appointment->id,
+        "amount" => $request->amount_add,
+        "method_payment" => $request->method_payment,
+    ]);
+
+    return response()->json([
+        "message" => 200,
+    ]);
+}
+
 
     /**
      * Display the specified resource.
