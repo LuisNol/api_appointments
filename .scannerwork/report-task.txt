@@ -1,0 +1,6 @@
+projectKey=api_clinica
+serverUrl=https://sonarqube.admincursos-udemy.site
+serverVersion=10.7.0.96327
+dashboardUrl=https://sonarqube.admincursos-udemy.site/dashboard?id=api_clinica
+ceTaskId=b9d695fb-c26d-4544-a487-eb61da69e210
+ceTaskUrl=https://sonarqube.admincursos-udemy.site/api/ce/task?id=b9d695fb-c26d-4544-a487-eb61da69e210

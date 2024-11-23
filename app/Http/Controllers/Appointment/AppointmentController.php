@@ -210,65 +210,64 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create',Appointment::class);
-        // doctor_id
-        // name
-        // surname
-        // mobile
-        // n_document
-        // name_companion
-        // surname_companion
-        // date_appointment
-        // specialitie_id
-        // doctor_schedule_join_hour_id
-        // amount
-        // amount_add
-        // method_payment
+        $this->authorize('create', Appointment::class);
 
-        $patient = null;
+    // Busca si ya existe el paciente por su documento
+    $patient = Patient::where("n_document", $request->n_document)->first();
 
-        $patient = Patient::where("n_document",$request->n_document)->first();
+    if (!$patient) {
+        // Si no existe, crea el paciente y su persona relacionada
+        $patient = Patient::create([
+            "name" => $request->name,
+            "surname" => $request->surname,
+            "mobile" => $request->mobile,
+            "n_document" => $request->n_document,
+        ]);
 
-        if(!$patient){
-            $patient = Patient::create([
-                "name" => $request->name,
-                "surname" => $request->surname,
-                "mobile" => $request->mobile,
-                "n_document" => $request->n_document,
+        PatientPerson::create([
+            "patient_id" => $patient->id,
+            "name_companion" => $request->name_companion,
+            "surname_companion" => $request->surname_companion,
+        ]);
+    } else {
+        // Si el paciente existe, verifica si tiene relación con person
+        if ($patient->person) {
+            // Si la relación existe, actualiza
+            $patient->person->update([
+                "name_companion" => $request->name_companion,
+                "surname_companion" => $request->surname_companion,
             ]);
+        } else {
+            // Si no tiene relación, crea un registro en PatientPerson
             PatientPerson::create([
                 "patient_id" => $patient->id,
                 "name_companion" => $request->name_companion,
                 "surname_companion" => $request->surname_companion,
             ]);
-        }else{
-            $patient->person->update([
-                "name_companion" => $request->name_companion,
-                "surname_companion" => $request->surname_companion,
-            ]);
         }
+    }
 
-        $appointment =  Appointment::create([
-            "doctor_id" => $request->doctor_id,
-            "patient_id" => $patient->id,
-            "date_appointment" => Carbon::parse($request->date_appointment)->format("Y-m-d h:i:s"),
-            "specialitie_id" => $request->specialitie_id,
-            "doctor_schedule_join_hour_id" => $request->doctor_schedule_join_hour_id,
-            "user_id" => auth("api")->user()->id,
-            "amount" => $request->amount,
-            "status_pay" => $request->amount != $request->amount_add ? 2 : 1,
-        ]);
+    // Crea la cita médica
+    $appointment = Appointment::create([
+        "doctor_id" => $request->doctor_id,
+        "patient_id" => $patient->id,
+        "date_appointment" => Carbon::parse($request->date_appointment)->format("Y-m-d h:i:s"),
+        "specialitie_id" => $request->specialitie_id,
+        "doctor_schedule_join_hour_id" => $request->doctor_schedule_join_hour_id,
+        "user_id" => auth("api")->user()->id,
+        "amount" => $request->amount,
+        "status_pay" => $request->amount != $request->amount_add ? 2 : 1,
+    ]);
 
+    // Crea el pago asociado
+    AppointmentPay::create([
+        "appointment_id" => $appointment->id,
+        "amount" => $request->amount_add,
+        "method_payment" => $request->method_payment,
+    ]);
 
-        AppointmentPay::create([
-            "appointment_id" => $appointment->id,
-            "amount" => $request->amount_add,
-            "method_payment" => $request->method_payment,
-        ]);
-
-        return response()->json([
-            "message" => 200,
-        ]);
+    return response()->json([
+        "message" => 200,
     }
 
     /**

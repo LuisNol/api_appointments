@@ -11,7 +11,7 @@ use App\Http\Controllers\Dashboard\DashboardKpiController;
 use App\Http\Controllers\Admin\Doctor\SpecialityController;
 use App\Http\Controllers\Appointment\AppointmentController;
 use App\Http\Controllers\Appointment\AppointmentPayController;
-use App\Http\Controllers\Appointment\AppointmentAttentioncontroller;
+use App\Http\Controllers\Appointment\AppointmentAttentionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,22 +24,13 @@ use App\Http\Controllers\Appointment\AppointmentAttentioncontroller;
 |
 */
 
+// Ruta básica de usuario autenticado
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-//prueba error IC
-//prueba 2
-//hola
-///PRUEBA DE FALLO
-///Prueba de fallo  2
-///Prueba de pase
 
-Route::group([
-     //Prueba 5/11/2024  hora:11:38
-    // 'middleware' => 'auth:api',
-    'prefix' => 'auth',
-    // 'middleware' => ['role:admin','permission:publish articles'],
-], function ($router) {
+// Grupo de rutas de autenticación
+Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
     Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -49,39 +40,56 @@ Route::group([
     Route::post('/reg', [AuthController::class, 'reg']);
 });
 
-Route::group([
-    'middleware' => 'auth:api',
-], function ($router) {
-    Route::resource("roles",RolesController::class);
+// Grupo principal con middleware de autenticación
+Route::middleware('auth:api')->group(function () {
 
-    Route::get("staffs/config",[StaffsController::class,"config"]);
-    Route::post("staffs/{id}",[StaffsController::class,"update"]);
-    Route::resource("staffs",StaffsController::class);
-    // 
-    Route::resource("specialities",SpecialityController::class);
-    // 
-    Route::get("doctors/profile/{id}",[DoctorsController::class,"profile"]);
-    Route::get("doctors/config",[DoctorsController::class,"config"]);
-    Route::post("doctors/{id}",[DoctorsController::class,"update"]);
-    Route::resource("doctors",DoctorsController::class);
-    // 
-    Route::get("patients/profile/{id}",[PatientController::class,"profile"]);
-    Route::post("patients/{id}",[PatientController::class,"update"]);
-    Route::resource("patients",PatientController::class);
-    // 
-    Route::get("appointmet/config",[AppointmentController::class,"config"]);
-    Route::get("appointmet/patient",[AppointmentController::class,"query_patient"]);
-    Route::post("appointmet/filter",[AppointmentController::class,"filter"]);
-    Route::post("appointmet/calendar",[AppointmentController::class,"calendar"]);
-    Route::resource("appointmet",AppointmentController::class);
+    // Rutas de roles
+    Route::resource('roles', RolesController::class);
 
-    Route::resource("appointmet-pay",AppointmentPayController::class);
-    Route::resource("appointmet-attention",AppointmentAttentioncontroller::class);
+    // Rutas de staff
+    Route::prefix('staffs')->group(function () {
+        Route::get('config', [StaffsController::class, 'config']);
+        Route::post('{id}', [StaffsController::class, 'update']);
+        Route::resource('/', StaffsController::class)->parameters(['' => 'staffs']);
+    });
 
-    Route::post("dashboard/admin",[DashboardKpiController::class,"dashboard_admin"]);
-    Route::post("dashboard/admin-year",[DashboardKpiController::class,"dashboard_admin_year"]);
+    // Rutas de especialidades
+    Route::resource('specialities', SpecialityController::class);
 
-    Route::post("dashboard/doctor",[DashboardKpiController::class,"dashboard_doctor"]);
-    Route::get("dashboard/config",[DashboardKpiController::class,"config"]);
-    Route::post("dashboard/doctor-year",[DashboardKpiController::class,"dashboard_doctor_year"]);
+    // Rutas de doctores
+    Route::prefix('doctors')->group(function () {
+        Route::get('profile/{id}', [DoctorsController::class, 'profile']);
+        Route::get('config', [DoctorsController::class, 'config']);
+        Route::post('{id}', [DoctorsController::class, 'update']);
+        Route::resource('/', DoctorsController::class)->parameters(['' => 'doctors']);
+    });
+
+    // Rutas de pacientes
+    Route::prefix('patients')->group(function () {
+        Route::get('profile/{id}', [PatientController::class, 'profile']);
+        Route::post('{id}', [PatientController::class, 'update']);
+        Route::resource('/', PatientController::class)->parameters(['' => 'patients']);
+    });
+
+    // Rutas de citas
+    Route::prefix('appointments')->group(function () {
+        Route::get('config', [AppointmentController::class, 'config']);
+        Route::get('patient', [AppointmentController::class, 'query_patient']);
+        Route::post('filter', [AppointmentController::class, 'filter']);
+        Route::post('calendar', [AppointmentController::class, 'calendar']);
+        Route::resource('/', AppointmentController::class)->parameters(['' => 'appointments']);
+    });
+
+    // Rutas de pagos y atenciones de citas
+    Route::resource('appointment-pay', AppointmentPayController::class);
+    Route::resource('appointment-attention', AppointmentAttentionController::class);
+
+    // Rutas de dashboard
+    Route::prefix('dashboard')->group(function () {
+        Route::post('admin', [DashboardKpiController::class, 'dashboard_admin']);
+        Route::post('admin-year', [DashboardKpiController::class, 'dashboard_admin_year']);
+        Route::post('doctor', [DashboardKpiController::class, 'dashboard_doctor']);
+        Route::get('config', [DashboardKpiController::class, 'config']);
+        Route::post('doctor-year', [DashboardKpiController::class, 'dashboard_doctor_year']);
+    });
 });
