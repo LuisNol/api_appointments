@@ -141,4 +141,3 @@ jobs:
           body: "El despliegue a DigitalOcean se completó correctamente."
           to: "nolberto.sumaran@gmail.com"
           from: "nolberto.sumaran@gmail.com"
-
