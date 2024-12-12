@@ -15,9 +15,10 @@ class DocumentTypeController extends Controller
      */
     public function index(Request $request)
     {
+
         $this->authorize('viewAny', DocumentType::class);
         $search = $request->search;
-
+        
         $documentTypes = DocumentType::where('name', 'like', '%' . $search . '%')
             ->orderBy('id', 'desc')
             ->paginate(20);

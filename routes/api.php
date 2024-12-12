@@ -12,6 +12,9 @@ use App\Http\Controllers\Admin\Doctor\SpecialityController;
 use App\Http\Controllers\Appointment\AppointmentController;
 use App\Http\Controllers\Appointment\AppointmentPayController;
 use App\Http\Controllers\Appointment\AppointmentAttentioncontroller;
+use App\Http\Controllers\Document_type\DocumentTypeController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +61,11 @@ Route::group([
     Route::get("doctors/config",[DoctorsController::class,"config"]);
     Route::post("doctors/{id}",[DoctorsController::class,"update"]);
     Route::resource("doctors",DoctorsController::class);
+    
+    Route::get("documentypes",[DocumentTypeController::class,"index"]);
+    Route::post("documentypes",[DocumentTypeController::class,"store"]);
+    Route::put("documentypes/{id}",[DocumentTypeController::class,"update"]);
+   
     // 
     Route::get("patients/profile/{id}",[PatientController::class,"profile"]);
     Route::post("patients/{id}",[PatientController::class,"update"]);
