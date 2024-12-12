@@ -1,0 +1,6 @@
+projectKey=api_clinica
+serverUrl=http://localhost:9000
+serverVersion=10.7.0.96327
+dashboardUrl=http://localhost:9000/dashboard?id=api_clinica
+ceTaskId=3e8d1b58-fbdb-4f9e-8ef4-380e925d881a
+ceTaskUrl=http://localhost:9000/api/ce/task?id=3e8d1b58-fbdb-4f9e-8ef4-380e925d881a

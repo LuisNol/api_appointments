@@ -2,6 +2,7 @@
 
 namespace App\Models\Patient;
 
+use App\Models\DocumentType\DocumentType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,23 +32,29 @@ class Patient extends Model
         "fr",
         "peso",
         "n_document",
+        'document_type_id',
         // "created_at"
     ];
 
 
     public function setCreatedAtAttribute($value)
     {
-    	date_default_timezone_set('America/Lima');
-        $this->attributes["created_at"]= Carbon::now();
+        date_default_timezone_set('America/Lima');
+        $this->attributes["created_at"] = Carbon::now();
     }
 
     public function setUpdatedAtAttribute($value)
     {
-    	date_default_timezone_set("America/Lima");
-        $this->attributes["updated_at"]= Carbon::now();
+        date_default_timezone_set("America/Lima");
+        $this->attributes["updated_at"] = Carbon::now();
     }
 
-    public function person() {
-        return $this->hasOne(PatientPerson::class,"patient_id");
+    public function person()
+    {
+        return $this->hasOne(PatientPerson::class, "patient_id");
+    }
+    public function documentType()
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 }
