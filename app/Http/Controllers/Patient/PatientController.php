@@ -22,13 +22,15 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('viewAny',Patient::class);
+        $this->authorize('viewAny', Patient::class);
         $search = $request->search;
-
-        $patients = Patient::where(DB::raw("CONCAT(patients.name,' ',IFNULL(patients.surname,''),' ',patients.email)"),"like","%".$search."%")
-                        ->orderBy("id","desc")
-                        ->paginate(20);
-
+    
+        // Cargar pacientes junto con el nombre del tipo de documento
+        $patients = Patient::with('documentType')  // Asegúrate de que la relación esté definida correctamente
+                    ->where(DB::raw("CONCAT(patients.name,' ',IFNULL(patients.surname,''),' ',patients.email)"), "like", "%" . $search . "%")
+                    ->orderBy("id", "desc")
+                    ->paginate(20);
+    
         return response()->json([
             "total" => $patients->total(),
             "patients" => PatientCollection::make($patients),

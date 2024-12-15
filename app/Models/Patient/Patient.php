@@ -33,7 +33,6 @@ class Patient extends Model
         "peso",
         "n_document",
         'document_type_id',
-        // "created_at"
     ];
 
 

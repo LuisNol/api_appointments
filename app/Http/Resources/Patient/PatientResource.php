@@ -50,6 +50,9 @@ class PatientResource extends JsonResource
                 "relationship_responsible" => $this->resource->person->relationship_responsible,
             ]: NULL,
             "created_at" => $this->resource->created_at->format("Y-m-d h:i A"),
+            'document_type_id' => $this->document_type_id,  // Incluye la columna 'document_type_id'
+            'document_type_name' => $this->documentType ? $this->documentType->name : 'N/A', // Incluye el nombre del tipo de documento
+
         ];
     }
 }

@@ -62,9 +62,9 @@ Route::group([
     Route::post("doctors/{id}",[DoctorsController::class,"update"]);
     Route::resource("doctors",DoctorsController::class);
     
-    Route::get("documentypes",[DocumentTypeController::class,"index"]);
-    Route::post("documentypes",[DocumentTypeController::class,"store"]);
-    Route::put("documentypes/{id}",[DocumentTypeController::class,"update"]);
+    Route::get("document-types",[DocumentTypeController::class,"index"]);
+    Route::post("document-types",[DocumentTypeController::class,"store"]);
+    Route::put("document-types/{id}",[DocumentTypeController::class,"update"]);
    
     // 
     Route::get("patients/profile/{id}",[PatientController::class,"profile"]);
